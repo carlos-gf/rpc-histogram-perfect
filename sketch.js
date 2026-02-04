@@ -10,42 +10,54 @@ const BLUR_A = 18.0;
 const BLUR_B = 34.0;
 const B_LEVELS = 10;
 
-let fileInput;
-let saveZipButton;
-
 let srcBaseName = "image";
 
+let hiddenFileInput;
+
+/* ------------------------------------------------------------ */
+/* Setup */
+/* ------------------------------------------------------------ */
+
 function setup() {
-  createCanvas(W, H);
+  const cnv = createCanvas(W, H);
   pixelDensity(1);
   noLoop();
 
-  // Image input
-  fileInput = createFileInput(handleFile);
-  fileInput.position(12, 12);
+  // Put canvas inside centered holder
+  cnv.parent("canvas-holder");
 
-  // ZIP download button
-  saveZipButton = createButton("Download outputs as ZIP");
-  saveZipButton.position(12, 44);
-  saveZipButton.mousePressed(saveOutputsZip);
+  // Hidden file input (Safari/iPad safe)
+  hiddenFileInput = createFileInput(handleFile);
+  hiddenFileInput.hide();
+
+  // Connect HTML buttons
+  const chooseBtn = document.getElementById("chooseBtn");
+  chooseBtn.onclick = () => hiddenFileInput.elt.click();
+
+  const zipBtn = document.getElementById("zipBtn");
+  zipBtn.onclick = saveOutputsZip;
 
   redraw();
 }
 
+/* ------------------------------------------------------------ */
+/* Draw */
+/* ------------------------------------------------------------ */
+
 function draw() {
-  background(20);
+  background(0);
 
   if (!src) {
     fill(220);
     textSize(14);
-    text("Choose an image above.", 12, 90);
+    text("Choose an image below.", 12, 40);
     textSize(12);
-    text("Then click: Download outputs as ZIP", 12, 112);
+    text("Then download all outputs as a ZIP.", 12, 60);
     return;
   }
 
   const pad = 16;
-  const topOffset = 80;
+  const topOffset = 20;
 
   const cellW = (width - pad * 3) / 2;
   const cellH = (height - pad * 3 - topOffset) / 2;
@@ -53,10 +65,12 @@ function draw() {
   drawFit(src, pad, pad + topOffset, cellW, cellH);
   if (outA) drawFit(outA, pad * 2 + cellW, pad + topOffset, cellW, cellH);
   if (outB) drawFit(outB, pad, pad * 2 + cellH + topOffset, cellW, cellH);
-  if (outCTRL) drawFit(outCTRL, pad * 2 + cellW, pad * 2 + cellH + topOffset, cellW, cellH);
+  if (outCTRL)
+    drawFit(outCTRL, pad * 2 + cellW, pad * 2 + cellH + topOffset, cellW, cellH);
 
   fill(235);
   textSize(12);
+
   text("SRC", pad, pad + topOffset + 4);
   text("RPC_A", pad * 2 + cellW, pad + topOffset + 4);
   text("RPC_B", pad, pad * 2 + cellH + topOffset + 4);
@@ -64,7 +78,7 @@ function draw() {
 }
 
 /* ------------------------------------------------------------ */
-/* Image Handling */
+/* Image Input */
 /* ------------------------------------------------------------ */
 
 function handleFile(file) {
@@ -115,16 +129,14 @@ async function saveOutputsZip() {
   const canvasBlob = await canvasToBlob();
   zip.file(`${base}_CANVAS.png`, canvasBlob);
 
-  // Individual outputs
+  // Outputs
   zip.file(`${base}_SRC.png`, imageToBlob(src));
   zip.file(`${base}_RPC_A.png`, imageToBlob(outA));
   zip.file(`${base}_RPC_B.png`, imageToBlob(outB));
   zip.file(`${base}_CTRL.png`, imageToBlob(outCTRL));
 
-  // Generate zip
+  // Download ZIP
   const content = await zip.generateAsync({ type: "blob" });
-
-  // Download
   saveAs(content, `${base}_outputs.zip`);
 }
 
@@ -153,7 +165,7 @@ function dataURLToBlob(dataURL) {
 }
 
 /* ------------------------------------------------------------ */
-/* Core Processing Logic */
+/* Core Logic */
 /* ------------------------------------------------------------ */
 
 function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
@@ -216,7 +228,6 @@ function permuteHistogramPerfect(img, dstField, sourceUsesHue) {
   for (let i = 0; i < n; i++) {
     srcIdx[i] = i;
     dstIdx[i] = i;
-
     dstKey[i] = dstField[i];
 
     const r = img.pixels[i * 4 + 0];
