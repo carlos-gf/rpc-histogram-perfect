@@ -5,68 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RPC histogram perfect generator</title>
 
-    <!-- p5.js -->
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
 
-    <!-- ZIP export support -->
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
     <style>
       body {
         margin: 0;
-        background: black;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
+        background: #000;
         height: 100vh;
 
-        font-family: sans-serif;
-        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: #fff;
       }
 
       #page {
-        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
       }
 
       canvas {
-        border: 1px solid rgba(255, 255, 255, 0.15);
         display: block;
-        margin: 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.15);
       }
 
       #controls {
-        margin-top: 18px;
-
         display: flex;
         flex-direction: column;
-        gap: 12px;
-
         align-items: center;
+        gap: 12px;
+        width: min(360px, 86vw);
       }
 
       button {
-        width: 280px;
-        max-width: 85vw;
+        width: 100%;
+        padding: 18px 16px;
+        font-size: 18px;
+        line-height: 1;
 
-        padding: 16px;
-        font-size: 16px;
-
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.35);
         background: rgba(255, 255, 255, 0.08);
-        color: white;
+        color: #fff;
 
-        border-radius: 0px;
+        border-radius: 0;
         cursor: pointer;
       }
 
-      button:hover {
+      button:active {
         background: rgba(255, 255, 255, 0.18);
       }
 
-      /* Hide the real file input */
+      button[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
       input[type="file"] {
         display: none;
       }
@@ -79,10 +79,10 @@
 
       <div id="controls">
         <button id="chooseBtn">Choose Image</button>
-        <button id="zipBtn">Download outputs as ZIP</button>
+        <button id="zipBtn" disabled>Download outputs as ZIP</button>
       </div>
     </div>
 
-    <script src="sketch.js"></script>
+    <script src="sketch.js?v=4"></script>
   </body>
 </html>
