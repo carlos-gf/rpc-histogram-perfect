@@ -12,7 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
-    <!-- Styling -->
     <style>
       body {
         margin: 0;
@@ -33,27 +32,55 @@
       }
 
       canvas {
-        margin-top: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
+        display: block;
+        margin: 0 auto;
       }
 
-      button,
-      input {
-        margin: 6px;
-        padding: 8px 14px;
-        font-size: 14px;
-        border-radius: 10px;
-        border: none;
+      /* Button area under canvas */
+      #controls {
+        margin-top: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+
+      /* Big rectangular buttons */
+      input,
+      button {
+        width: 280px;
+        max-width: 85vw;
+
+        padding: 16px 18px;
+        font-size: 16px;
+
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+
+        border-radius: 0px;
+        box-sizing: border-box;
+
+        text-align: center;
       }
 
       button {
         cursor: pointer;
       }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
     </style>
   </head>
 
   <body>
-    <div id="page"></div>
+    <div id="page">
+      <div id="canvas-holder"></div>
+      <div id="controls"></div>
+    </div>
+
     <script src="sketch.js"></script>
   </body>
 </html>
