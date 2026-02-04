@@ -11,38 +11,36 @@ const BLUR_B = 34.0;
 const B_LEVELS = 10;
 
 let srcBaseName = "image";
-
 let hiddenFileInput;
-
-/* ------------------------------------------------------------ */
-/* Setup */
-/* ------------------------------------------------------------ */
 
 function setup() {
   const cnv = createCanvas(W, H);
   pixelDensity(1);
   noLoop();
 
-  // Put canvas inside centered holder
   cnv.parent("canvas-holder");
 
-  // Hidden file input (Safari/iPad safe)
   hiddenFileInput = createFileInput(handleFile);
   hiddenFileInput.hide();
 
-  // Connect HTML buttons
   const chooseBtn = document.getElementById("chooseBtn");
-  chooseBtn.onclick = () => hiddenFileInput.elt.click();
-
   const zipBtn = document.getElementById("zipBtn");
-  zipBtn.onclick = saveOutputsZip;
+
+  if (!chooseBtn || !zipBtn) {
+    alert("Buttons not found. Check index.html ids chooseBtn and zipBtn.");
+    return;
+  }
+
+  chooseBtn.addEventListener("click", () => {
+    hiddenFileInput.elt.click();
+  });
+
+  zipBtn.addEventListener("click", () => {
+    saveOutputsZip();
+  });
 
   redraw();
 }
-
-/* ------------------------------------------------------------ */
-/* Draw */
-/* ------------------------------------------------------------ */
 
 function draw() {
   background(0);
@@ -65,21 +63,15 @@ function draw() {
   drawFit(src, pad, pad + topOffset, cellW, cellH);
   if (outA) drawFit(outA, pad * 2 + cellW, pad + topOffset, cellW, cellH);
   if (outB) drawFit(outB, pad, pad * 2 + cellH + topOffset, cellW, cellH);
-  if (outCTRL)
-    drawFit(outCTRL, pad * 2 + cellW, pad * 2 + cellH + topOffset, cellW, cellH);
+  if (outCTRL) drawFit(outCTRL, pad * 2 + cellW, pad * 2 + cellH + topOffset, cellW, cellH);
 
   fill(235);
   textSize(12);
-
   text("SRC", pad, pad + topOffset + 4);
   text("RPC_A", pad * 2 + cellW, pad + topOffset + 4);
   text("RPC_B", pad, pad * 2 + cellH + topOffset + 4);
   text("CTRL", pad * 2 + cellW, pad * 2 + cellH + topOffset + 4);
 }
-
-/* ------------------------------------------------------------ */
-/* Image Input */
-/* ------------------------------------------------------------ */
 
 function handleFile(file) {
   if (!file || file.type !== "image") return;
@@ -101,18 +93,13 @@ function regenerate() {
   outA = permuteHistogramPerfect(src, fieldA, true);
   outB = permuteHistogramPerfect(src, fieldB, false);
 
-  outCTRL = shuffleTilesDeterministic(
-    src,
-    CTRL_TILE,
-    stableSeedFromName(srcBaseName)
-  );
+  outCTRL = shuffleTilesDeterministic(src, CTRL_TILE, stableSeedFromName(srcBaseName));
+
+  const zipBtn = document.getElementById("zipBtn");
+  if (zipBtn) zipBtn.disabled = false;
 
   redraw();
 }
-
-/* ------------------------------------------------------------ */
-/* ZIP Export */
-/* ------------------------------------------------------------ */
 
 async function saveOutputsZip() {
   if (!(src && outA && outB && outCTRL)) {
@@ -125,17 +112,14 @@ async function saveOutputsZip() {
 
   const zip = new JSZip();
 
-  // Canvas screenshot
   const canvasBlob = await canvasToBlob();
   zip.file(`${base}_CANVAS.png`, canvasBlob);
 
-  // Outputs
   zip.file(`${base}_SRC.png`, imageToBlob(src));
   zip.file(`${base}_RPC_A.png`, imageToBlob(outA));
   zip.file(`${base}_RPC_B.png`, imageToBlob(outB));
   zip.file(`${base}_CTRL.png`, imageToBlob(outCTRL));
 
-  // Download ZIP
   const content = await zip.generateAsync({ type: "blob" });
   saveAs(content, `${base}_outputs.zip`);
 }
@@ -164,9 +148,7 @@ function dataURLToBlob(dataURL) {
   return new Blob([u8], { type: mime });
 }
 
-/* ------------------------------------------------------------ */
-/* Core Logic */
-/* ------------------------------------------------------------ */
+/* Core logic */
 
 function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
   const w = img.width;
@@ -180,7 +162,6 @@ function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
     const r = img.pixels[i * 4 + 0];
     const g = img.pixels[i * 4 + 1];
     const b = img.pixels[i * 4 + 2];
-
     const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
     lum.pixels[i * 4 + 0] = y;
@@ -195,16 +176,14 @@ function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
   lum.loadPixels();
   const field = new Float32Array(w * h);
 
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
+  for (let yy = 0; yy < h; yy++) {
+    for (let xx = 0; xx < w; xx++) {
+      const i = yy * w + xx;
       let v = lum.pixels[i * 4] / 255.0;
 
-      if (quantLevels > 0) {
-        v = Math.floor(v * quantLevels) / quantLevels;
-      }
+      if (quantLevels > 0) v = Math.floor(v * quantLevels) / quantLevels;
 
-      v += x * 1e-7 + y * 1e-9;
+      v += xx * 1e-7 + yy * 1e-9;
       field[i] = v;
     }
   }
@@ -221,7 +200,6 @@ function permuteHistogramPerfect(img, dstField, sourceUsesHue) {
 
   const srcIdx = new Int32Array(n);
   const dstIdx = new Int32Array(n);
-
   const srcKey = new Float32Array(n);
   const dstKey = new Float32Array(n);
 
@@ -283,18 +261,15 @@ function shuffleTilesDeterministic(img, tile, seed) {
 
   const tileCount = cols * rows;
   const order = new Int32Array(tileCount);
-
   for (let i = 0; i < tileCount; i++) order[i] = i;
 
   const rng = mulberry32(seed >>> 0);
-
   for (let i = tileCount - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
 
   let t = 0;
-
   for (let ty = 0; ty < rows; ty++) {
     for (let tx = 0; tx < cols; tx++) {
       const pick = order[t++];
@@ -323,9 +298,7 @@ function shuffleTilesDeterministic(img, tile, seed) {
   return out;
 }
 
-/* ------------------------------------------------------------ */
 /* Helpers */
-/* ------------------------------------------------------------ */
 
 function sortIdxByKey(idx, key) {
   Array.from(idx)
@@ -368,9 +341,7 @@ function baseName(filename) {
 
 function stableSeedFromName(name) {
   let h = 0;
-  for (let i = 0; i < name.length; i++) {
-    h = (31 * h + name.charCodeAt(i)) | 0;
-  }
+  for (let i = 0; i < name.length; i++) h = (31 * h + name.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
 
@@ -385,14 +356,11 @@ function mulberry32(a) {
 
 function timestamp() {
   const d = new Date();
-
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const da = String(d.getDate()).padStart(2, "0");
-
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   const ss = String(d.getSeconds()).padStart(2, "0");
-
   return `${y}${m}${da}_${hh}${mm}${ss}`;
 }
