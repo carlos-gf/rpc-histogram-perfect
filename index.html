@@ -6,7 +6,6 @@
     <title>RPC histogram perfect generator</title>
 
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
@@ -14,14 +13,13 @@
       body {
         margin: 0;
         background: #000;
-        height: 100vh;
 
         display: flex;
         justify-content: center;
-        align-items: flex-start;
+        align-items: center;
 
-        padding-top: 16px;
-        box-sizing: border-box;
+        /* iOS-safe viewport height */
+        min-height: 100svh;
 
         font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         color: #fff;
@@ -33,7 +31,9 @@
         align-items: center;
         gap: 16px;
 
-        max-height: 96vh;
+        /* prevents edge clipping */
+        padding: 16px;
+        box-sizing: border-box;
       }
 
       canvas {
@@ -41,7 +41,7 @@
         margin: 0 auto;
         border: 1px solid rgba(255, 255, 255, 0.15);
 
-        /* responsive display size, keeps internal 900x900 resolution */
+        /* responsive display size (internal render stays 900x900) */
         width: min(92vw, 900px);
         height: auto;
       }
@@ -80,6 +80,18 @@
       input[type="file"] {
         display: none;
       }
+
+      /* iPhone / small screens: use top alignment + allow scrolling */
+      @media (max-width: 520px), (max-height: 760px) {
+        body {
+          align-items: flex-start;
+          padding-top: 12px;
+          box-sizing: border-box;
+
+          /* if canvas + buttons are taller than screen, scroll instead of crop */
+          overflow-y: auto;
+        }
+      }
     </style>
   </head>
 
@@ -93,6 +105,6 @@
       </div>
     </div>
 
-    <script src="sketch.js?v=5"></script>
+    <script src="sketch.js?v=6"></script>
   </body>
 </html>
