@@ -13,23 +13,25 @@ const B_LEVELS = 10;
 let srcBaseName = "image";
 let hiddenFileInput;
 
+/* ------------------------------------------------------------ */
+/* Setup */
+/* ------------------------------------------------------------ */
+
 function setup() {
   const cnv = createCanvas(W, H);
   pixelDensity(1);
   noLoop();
 
+  // Put canvas inside centered holder
   cnv.parent("canvas-holder");
 
+  // Hidden file input (Safari/iPad safe)
   hiddenFileInput = createFileInput(handleFile);
   hiddenFileInput.hide();
 
+  // Connect HTML buttons
   const chooseBtn = document.getElementById("chooseBtn");
   const zipBtn = document.getElementById("zipBtn");
-
-  if (!chooseBtn || !zipBtn) {
-    alert("Buttons not found. Check index.html ids chooseBtn and zipBtn.");
-    return;
-  }
 
   chooseBtn.addEventListener("click", () => {
     hiddenFileInput.elt.click();
@@ -41,6 +43,10 @@ function setup() {
 
   redraw();
 }
+
+/* ------------------------------------------------------------ */
+/* Draw (Option A: Labels in gutter, no overlap) */
+/* ------------------------------------------------------------ */
 
 function draw() {
   background(0);
@@ -55,23 +61,58 @@ function draw() {
   }
 
   const pad = 16;
+  const gutter = 18; // reserved label strip height
   const topOffset = 20;
 
   const cellW = (width - pad * 3) / 2;
   const cellH = (height - pad * 3 - topOffset) / 2;
 
-  drawFit(src, pad, pad + topOffset, cellW, cellH);
-  if (outA) drawFit(outA, pad * 2 + cellW, pad + topOffset, cellW, cellH);
-  if (outB) drawFit(outB, pad, pad * 2 + cellH + topOffset, cellW, cellH);
-  if (outCTRL) drawFit(outCTRL, pad * 2 + cellW, pad * 2 + cellH + topOffset, cellW, cellH);
+  // Cell coordinates
+  const x1 = pad;
+  const y1 = pad + topOffset;
 
+  const x2 = pad * 2 + cellW;
+  const y2 = y1;
+
+  const x3 = pad;
+  const y3 = pad * 2 + cellH + topOffset;
+
+  const x4 = x2;
+  const y4 = y3;
+
+  // Draw labels above images
+  drawLabel("SRC", x1, y1, cellW, gutter);
+  drawLabel("RPC_A", x2, y2, cellW, gutter);
+  drawLabel("RPC_B", x3, y3, cellW, gutter);
+  drawLabel("CTRL", x4, y4, cellW, gutter);
+
+  // Draw images below label gutters
+  drawFit(src, x1, y1 + gutter, cellW, cellH - gutter);
+  if (outA) drawFit(outA, x2, y2 + gutter, cellW, cellH - gutter);
+  if (outB) drawFit(outB, x3, y3 + gutter, cellW, cellH - gutter);
+  if (outCTRL) drawFit(outCTRL, x4, y4 + gutter, cellW, cellH - gutter);
+}
+
+function drawLabel(label, x, y, w, h) {
+  noStroke();
+
+  // Background strip for readability
+  fill(0, 180);
+  rect(x, y, w, h);
+
+  // Text
   fill(235);
   textSize(12);
-  text("SRC", pad, pad + topOffset + 4);
-  text("RPC_A", pad * 2 + cellW, pad + topOffset + 4);
-  text("RPC_B", pad, pad * 2 + cellH + topOffset + 4);
-  text("CTRL", pad * 2 + cellW, pad * 2 + cellH + topOffset + 4);
+  textAlign(LEFT, CENTER);
+  text(label, x + 6, y + h / 2);
+
+  // Reset alignment
+  textAlign(LEFT, BASELINE);
 }
+
+/* ------------------------------------------------------------ */
+/* Image Input */
+/* ------------------------------------------------------------ */
 
 function handleFile(file) {
   if (!file || file.type !== "image") return;
@@ -93,13 +134,22 @@ function regenerate() {
   outA = permuteHistogramPerfect(src, fieldA, true);
   outB = permuteHistogramPerfect(src, fieldB, false);
 
-  outCTRL = shuffleTilesDeterministic(src, CTRL_TILE, stableSeedFromName(srcBaseName));
+  outCTRL = shuffleTilesDeterministic(
+    src,
+    CTRL_TILE,
+    stableSeedFromName(srcBaseName)
+  );
 
+  // Enable ZIP button once outputs exist
   const zipBtn = document.getElementById("zipBtn");
-  if (zipBtn) zipBtn.disabled = false;
+  zipBtn.disabled = false;
 
   redraw();
 }
+
+/* ------------------------------------------------------------ */
+/* ZIP Export */
+/* ------------------------------------------------------------ */
 
 async function saveOutputsZip() {
   if (!(src && outA && outB && outCTRL)) {
@@ -112,14 +162,17 @@ async function saveOutputsZip() {
 
   const zip = new JSZip();
 
+  // Canvas screenshot
   const canvasBlob = await canvasToBlob();
   zip.file(`${base}_CANVAS.png`, canvasBlob);
 
+  // Outputs
   zip.file(`${base}_SRC.png`, imageToBlob(src));
   zip.file(`${base}_RPC_A.png`, imageToBlob(outA));
   zip.file(`${base}_RPC_B.png`, imageToBlob(outB));
   zip.file(`${base}_CTRL.png`, imageToBlob(outCTRL));
 
+  // Download ZIP
   const content = await zip.generateAsync({ type: "blob" });
   saveAs(content, `${base}_outputs.zip`);
 }
@@ -148,7 +201,9 @@ function dataURLToBlob(dataURL) {
   return new Blob([u8], { type: mime });
 }
 
-/* Core logic */
+/* ------------------------------------------------------------ */
+/* Core Logic */
+/* ------------------------------------------------------------ */
 
 function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
   const w = img.width;
@@ -162,6 +217,7 @@ function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
     const r = img.pixels[i * 4 + 0];
     const g = img.pixels[i * 4 + 1];
     const b = img.pixels[i * 4 + 2];
+
     const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
     lum.pixels[i * 4 + 0] = y;
@@ -181,7 +237,9 @@ function buildBlurredLuminanceField(img, blurRadius, quantLevels) {
       const i = yy * w + xx;
       let v = lum.pixels[i * 4] / 255.0;
 
-      if (quantLevels > 0) v = Math.floor(v * quantLevels) / quantLevels;
+      if (quantLevels > 0) {
+        v = Math.floor(v * quantLevels) / quantLevels;
+      }
 
       v += xx * 1e-7 + yy * 1e-9;
       field[i] = v;
@@ -200,6 +258,7 @@ function permuteHistogramPerfect(img, dstField, sourceUsesHue) {
 
   const srcIdx = new Int32Array(n);
   const dstIdx = new Int32Array(n);
+
   const srcKey = new Float32Array(n);
   const dstKey = new Float32Array(n);
 
@@ -261,15 +320,18 @@ function shuffleTilesDeterministic(img, tile, seed) {
 
   const tileCount = cols * rows;
   const order = new Int32Array(tileCount);
+
   for (let i = 0; i < tileCount; i++) order[i] = i;
 
   const rng = mulberry32(seed >>> 0);
+
   for (let i = tileCount - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
 
   let t = 0;
+
   for (let ty = 0; ty < rows; ty++) {
     for (let tx = 0; tx < cols; tx++) {
       const pick = order[t++];
@@ -298,7 +360,9 @@ function shuffleTilesDeterministic(img, tile, seed) {
   return out;
 }
 
+/* ------------------------------------------------------------ */
 /* Helpers */
+/* ------------------------------------------------------------ */
 
 function sortIdxByKey(idx, key) {
   Array.from(idx)
@@ -341,7 +405,9 @@ function baseName(filename) {
 
 function stableSeedFromName(name) {
   let h = 0;
-  for (let i = 0; i < name.length; i++) h = (31 * h + name.charCodeAt(i)) | 0;
+  for (let i = 0; i < name.length; i++) {
+    h = (31 * h + name.charCodeAt(i)) | 0;
+  }
   return Math.abs(h);
 }
 
