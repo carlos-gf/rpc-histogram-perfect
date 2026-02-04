@@ -16,13 +16,10 @@
       body {
         margin: 0;
         background: black;
-
         display: flex;
         justify-content: center;
         align-items: center;
-
         height: 100vh;
-
         font-family: sans-serif;
         color: white;
       }
@@ -37,7 +34,6 @@
         margin: 0 auto;
       }
 
-      /* Button area under canvas */
       #controls {
         margin-top: 18px;
         display: flex;
@@ -46,13 +42,10 @@
         align-items: center;
       }
 
-      /* Big rectangular buttons */
-      input,
       button {
         width: 280px;
         max-width: 85vw;
-
-        padding: 16px 18px;
+        padding: 16px;
         font-size: 16px;
 
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -60,17 +53,16 @@
         color: white;
 
         border-radius: 0px;
-        box-sizing: border-box;
-
-        text-align: center;
-      }
-
-      button {
         cursor: pointer;
       }
 
       button:hover {
         background: rgba(255, 255, 255, 0.18);
+      }
+
+      /* Hide the real file input */
+      input[type="file"] {
+        display: none;
       }
     </style>
   </head>
@@ -78,7 +70,11 @@
   <body>
     <div id="page">
       <div id="canvas-holder"></div>
-      <div id="controls"></div>
+
+      <div id="controls">
+        <button id="chooseBtn">Choose Image</button>
+        <button id="zipBtn">Download outputs as ZIP</button>
+      </div>
     </div>
 
     <script src="sketch.js"></script>
