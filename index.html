@@ -17,8 +17,11 @@
         height: 100vh;
 
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: flex-start;
+
+        padding-top: 16px;
+        box-sizing: border-box;
 
         font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         color: #fff;
@@ -29,11 +32,18 @@
         flex-direction: column;
         align-items: center;
         gap: 16px;
+
+        max-height: 96vh;
       }
 
       canvas {
         display: block;
+        margin: 0 auto;
         border: 1px solid rgba(255, 255, 255, 0.15);
+
+        /* responsive display size, keeps internal 900x900 resolution */
+        width: min(92vw, 900px);
+        height: auto;
       }
 
       #controls {
@@ -83,6 +93,6 @@
       </div>
     </div>
 
-    <script src="sketch.js?v=4"></script>
+    <script src="sketch.js?v=5"></script>
   </body>
 </html>
